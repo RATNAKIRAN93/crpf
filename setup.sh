@@ -5,6 +5,17 @@
 
 set -e  # Exit on any error
 
+# Check if running on a Debian/Ubuntu-based system
+if ! command -v apt &> /dev/null; then
+    echo "❌ Error: This script requires a Debian/Ubuntu-based system with apt package manager."
+    exit 1
+fi
+
+# Check if running with sufficient privileges for sudo
+if ! sudo -n true 2>/dev/null; then
+    echo "⚠️  This script requires sudo privileges. You may be prompted for your password."
+fi
+
 echo "🚀 Starting CRPF development environment setup..."
 
 # Update system
