@@ -1,0 +1,14 @@
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: true
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+
+setup.ilm.enabled: true
+setup.ilm.policy_name: "logs-hotwarm"          # For index rollover and retention
+setup.ilm.rollover_alias: "filebeat"
+setup.ilm.pattern: "{now/d}-000001"
+setup.kibana.host: "http://localhost:5601"
+logging.level: info
+logging.to_files: true

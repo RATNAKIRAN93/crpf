@@ -1,0 +1,30 @@
+heartbeat.monitors:
+  - type: http
+    id: es_http
+    name: Elasticsearch HTTP
+    urls: ["http://elasticsearch:9200"]
+    check.response.status: [200]
+    schedule: "@every 10s"
+
+  - type: http
+    id: kibana_http
+    name: Kibana HTTP
+    urls: ["http://kibana:5601/api/status"]
+    check.response.status: [200]
+    schedule: "@every 10s"
+
+  - type: icmp
+    id: external_ping
+    name: External Ping
+    hosts: ["8.8.8.8"]
+    schedule: "@every 30s"
+
+setup.kibana:
+  host: "http://kibana:5601"
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+
+logging.level: info
+logging.to_files: false
+logging.to_stderr: true

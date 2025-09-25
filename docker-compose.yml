@@ -1,0 +1,147 @@
+version: "3.8"
+
+networks:
+  crpf-network:
+    driver: bridge
+
+volumes:
+  elasticsearch_data:
+
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=crpf-logs
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - ELASTIC_PASSWORD=D-1wd1ZEURfk7t6mRqu9
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - crpf-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -u elastic:D-1wd1ZEURfk7t6mRqu9 http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_SERVICEACCOUNTTOKEN=AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYS10b2tlbi0yOkd5T2J4S1hGVDh1Z1VXeDRMRF9BWGc
+      - xpack.encryptedSavedObjects.encryptionKey=fd2a13e7adffe5b8d226fc97316fea83
+      - xpack.reporting.encryptionKey=5d6691c2a4d1d6185ed31c3e3040fb4b
+      - xpack.security.encryptionKey=04f8283ff8d310d2e8782ac9397197ed
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - crpf-network
+
+  apm-server:
+    image: docker.elastic.co/apm/apm-server:8.11.0
+    container_name: apm-server
+    ports:
+      - "8200:8200"
+    command: >
+      apm-server -e
+      -E apm-server.host=0.0.0.0:8200
+      -E output.elasticsearch.hosts=["http://elasticsearch:9200"]
+      -E output.elasticsearch.username=elastic
+      -E output.elasticsearch.password=D-1wd1ZEURfk7t6mRqu9
+      -E setup.kibana.host=http://kibana:5601
+      -E logging.to_stderr=true
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_started
+    networks:
+      - crpf-network
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.0
+    container_name: filebeat
+    user: root
+    restart: unless-stopped
+    command: ["--strict.perms=false","-e","-c","/usr/share/filebeat/filebeat.yml"]
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./modules.d:/usr/share/filebeat/modules.d:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_started
+    networks:
+      - crpf-network
+
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:8.11.0
+    container_name: metricbeat
+    user: root
+    restart: unless-stopped
+    command:
+      [
+        "-e","--strict.perms=false","-c","/usr/share/metricbeat/metricbeat.yml",
+        "-E","output.elasticsearch.username=elastic",
+        "-E","output.elasticsearch.password=D-1wd1ZEURfk7t6mRqu9",
+        "-E","output.elasticsearch.hosts=[\"http://elasticsearch:9200\"]",
+        "-E","setup.kibana.host=http://kibana:5601"
+      ]
+    volumes:
+      - ./metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /proc:/hostfs/proc:ro
+      - /:/hostfs:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_started
+    networks:
+      - crpf-network
+
+  heartbeat:
+    image: docker.elastic.co/beats/heartbeat:8.11.0
+    container_name: heartbeat
+    user: root
+    restart: unless-stopped
+    command:
+      [
+        "-e","-c","/usr/share/heartbeat/heartbeat.yml",
+        "-E","output.elasticsearch.username=elastic",
+        "-E","output.elasticsearch.password=D-1wd1ZEURfk7t6mRqu9",
+        "-E","output.elasticsearch.hosts=[\"http://elasticsearch:9200\"]",
+        "-E","setup.kibana.host=http://kibana:5601"
+      ]
+    volumes:
+      - ./heartbeat.yml:/usr/share/heartbeat/heartbeat.yml:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_started
+    networks:
+      - crpf-network

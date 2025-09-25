@@ -1,0 +1,65 @@
+filebeat.modules:
+  - module: system
+    syslog:
+      enabled: true
+      var.paths: ["/var/log/syslog*", "/var/log/messages*"]
+    auth:
+      enabled: true
+      var.paths: ["/var/log/auth.log*", "/var/log/secure*"]
+
+# filebeat service snippet
+filebeat:
+  image: docker.elastic.co/beats/filebeat:8.11.0
+  container_name: filebeat
+  user: root
+  restart: unless-stopped
+  command: ["--strict.perms=false","-e","-c","/usr/share/filebeat/filebeat.yml"]
+  volumes:
+    - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+    - ./modules.d:/usr/share/filebeat/modules.d:ro
+    - /var/log:/var/log:ro
+    - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+  depends_on:
+    - elasticsearch
+    - kibana
+  networks:
+    - crpf-network
+
+
+
+filebeat.inputs:
+  - type: container
+    enabled: true
+    paths:
+      - /var/lib/docker/containers/*/*.log
+    processors:
+      - add_docker_metadata: ~
+    fields:
+      logtype: container
+      location: headquarters
+    fields_under_root: true
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  username: "elastic"
+  password: "D-1wd1ZEURfk7t6mRqu9"
+
+setup.kibana:
+  host: "http://kibana:5601"
+
+setup.ilm.enabled: true
+setup.ilm.rollover_alias: "logs-generic"
+setup.ilm.policy_name: "logs-hotwarm"
+
+setup.template.priority: 200
+setup.template.overwrite: true
+
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644

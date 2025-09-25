@@ -1,0 +1,41 @@
+# Global ignores for repository root
+# Node
+siem-frontend/node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Logs
+logs/
+*.log
+
+# Packages / archives
+*.deb
+*.tar
+*.tar.gz
+*.zip
+
+# Build artifacts
+build/
+dist/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Env files
+.env
+.env.*
+
+# Coverage
+coverage/
+.coverage*
+
+# Temporary
+.tmp/
+*.tmp

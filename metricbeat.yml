@@ -1,0 +1,45 @@
+metricbeat.modules:
+  - module: system
+    enabled: true
+    period: 10s
+    metricsets:
+      - cpu
+      - load
+      - memory
+      - network
+      - process
+      - process_summary
+      - filesystem
+      - fsstat
+      - socket
+    process.include_top_n:
+      by_cpu: 5
+      by_memory: 5
+
+  - module: docker
+    enabled: true
+    period: 10s
+    hosts: ["unix:///var/run/docker.sock"]
+    metricsets:
+      - container
+      - cpu
+      - diskio
+      - event
+      - healthcheck
+      - info
+      - memory
+      - network
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+
+setup.kibana:
+  host: "http://kibana:5601"
+
+setup.ilm.enabled: true
+setup.ilm.rollover_alias: "metricbeat"
+setup.ilm.policy_name: "metrics-hotwarm"
+
+logging.level: info
+logging.to_files: false
+logging.to_stderr: true
