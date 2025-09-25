@@ -1,0 +1,10 @@
+pandas
+numpy
+scikit-learn
+scipy
+elasticsearch
+fastapi
+uvicorn
+requests
+flask
+pytest
