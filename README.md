@@ -1,5 +1,8 @@
 # CRPF Centralized IT System Log Analyzer
 
+![CI](https://github.com/RATNAKIRAN93/crpf/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+
 ## Project Overview
 A comprehensive Security Information and Event Management (SIEM) system designed for the Central Reserve Police Force (CRPF) to analyze IT system logs across 500+ locations for centralized threat detection and cybersecurity monitoring.
 
@@ -37,3 +40,7 @@ A comprehensive Security Information and Event Management (SIEM) system designed
 - Cost-effective open-source solution
 - Scalable architecture for future expansion
 - Compliance with government cybersecurity standards
+
+## License
+
+This project is licensed under the MIT License - see the `LICENSE` file for details.
